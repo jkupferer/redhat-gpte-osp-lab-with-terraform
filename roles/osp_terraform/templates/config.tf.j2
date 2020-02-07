@@ -43,7 +43,41 @@ resource "openstack_networking_secgroup_rule_v2" "{{ tf_rule_name }}" {
   port_range_min    = {{ rule.port }}
   port_range_max    = {{ rule.port }}
   remote_ip_prefix  = "{{ rule.ip_prefix | default('0.0.0.0/0') }}"
-  security_group_id = "${openstack_networking_secgroup_v2.{{ tf_name }}.id}"
+  security_group_id = openstack_networking_secgroup_v2.{{ tf_name }}.id
 }
+{%   endfor %}
+{% endfor %}
+
+{% for network in osp_networks %}
+{%   set tf_name = network.name | terraform_name_escape %}
+resource "openstack_networking_network_v2" "{{ tf_name }}" {
+  name           = "{{ network.name }}"
+  admin_state_up = "true"
+  external       = "{{ network.external | default(false) | string | lower }}"
+}
+
+resource "openstack_networking_subnet_v2" "{{ tf_name }}" {
+  name            = "{{ network.name }}"
+  network_id      = openstack_networking_network_v2.{{ tf_name }}.id
+  cidr            = "{{ network.subnet_cidr }}"
+{%   if os_subnet.dns_nameservers | default(false) %}
+  dns_nameservers = ["{{ os_subnet.dns_nameservers | join('", "') }}"]
+{%   endif %}
+}
+
+{%   for router in network.routers | default([]) %}
+{%     set tf_router_name = router.name | terraform_name_escape %}
+resource "openstack_networking_router_v2" "{{ tf_router_name }}" {
+  name                = "{{ router.name }}"
+  admin_state_up      = true
+  external_network_id = openstack_networking_network_v2.{{ tf_name }}.id
+}
+{%    for interface in router.interfaces %}
+{%      set tf_subnet_name = interface | terraform_name_escape %}
+resource "openstack_networking_router_interface_v2" "router_interface_1" {
+  router_id = openstack_networking_router_v2.{{ tf_router_name }}.id
+  subnet_id = openstack_networking_subnet_v2.{{ tf_subnet_name }}.id
+}
+{%     endfor %}
 {%   endfor %}
 {% endfor %}
