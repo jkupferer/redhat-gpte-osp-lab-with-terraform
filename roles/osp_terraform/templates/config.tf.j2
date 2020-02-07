@@ -2,16 +2,17 @@ provider "openstack" {
   cloud = "{{ osp_cloud }}"
 }
 
-{% for flavor in osp_flavors %}
+{% for flavor in osp_terraform.osp_flavors | default([]) %}
 resource "openstack_compute_flavor_v2" "{{ flavor.name | terraform_name_escape }}" {
-  name  = "{{ flavor.name }}"
-  ram   = "{{ flavor.ram }}"
-  vcpus = "{{ flavor.vcpus }}"
-  disk  = "{{ flavor.disk }}"
+  name      = "{{ flavor.name }}"
+  ram       = "{{ flavor.ram }}"
+  vcpus     = "{{ flavor.vcpus }}"
+  disk      = "{{ flavor.disk }}"
+  is_public = "{{ flavor.is_public | default(false) | string | lower }}"
 }
 {% endfor %}
 
-{% for image in osp_images %}
+{% for image in osp_terraform.osp_images | default([]) %}
 resource "openstack_images_image_v2" "{{ image.name | terraform_name_escape }}" {
   name             = "{{ image.name }}"
   image_source_url = "{{ image.url }}"
@@ -20,14 +21,14 @@ resource "openstack_images_image_v2" "{{ image.name | terraform_name_escape }}" 
 }
 {% endfor %}
 
-{% for keypair in osp_keypairs %}
+{% for keypair in osp_terraform.osp_keypairs | default([]) %}
 resource "openstack_compute_keypair_v2" "{{ keypair.name | terraform_name_escape }}" {
   name       = "{{ keypair.name }}"
   public_key = "{{ lookup('file', keypair.path ~ '.pub') }}"
 }
 {% endfor %}
 
-{% for security_group in osp_security_groups %}
+{% for security_group in osp_terraform.osp_security_groups | default([]) %}
 {%   set tf_name = security_group.name | terraform_name_escape %}
 resource "openstack_networking_secgroup_v2" "{{ tf_name }}" {
   name        = "{{ security_group.name }}"
@@ -48,7 +49,7 @@ resource "openstack_networking_secgroup_rule_v2" "{{ tf_rule_name }}" {
 {%   endfor %}
 {% endfor %}
 
-{% for network in osp_networks %}
+{% for network in osp_terraform.osp_networks | default([]) %}
 {%   set tf_name = network.name | terraform_name_escape %}
 resource "openstack_networking_network_v2" "{{ tf_name }}" {
   name           = "{{ network.name }}"
@@ -60,8 +61,8 @@ resource "openstack_networking_subnet_v2" "{{ tf_name }}" {
   name            = "{{ network.name }}"
   network_id      = openstack_networking_network_v2.{{ tf_name }}.id
   cidr            = "{{ network.subnet_cidr }}"
-{%   if os_subnet.dns_nameservers | default(false) %}
-  dns_nameservers = ["{{ os_subnet.dns_nameservers | join('", "') }}"]
+{%   if network.dns_nameservers | default(false) %}
+  dns_nameservers = ["{{ network.dns_nameservers | join('", "') }}"]
 {%   endif %}
 }
 
@@ -80,4 +81,38 @@ resource "openstack_networking_router_interface_v2" "router_interface_1" {
 }
 {%     endfor %}
 {%   endfor %}
+{% endfor %}
+
+{% for instance in osp_terraform.osp_instances | default([]) %}
+{%   set tf_name = instance.name | terraform_name_escape %}
+resource "openstack_compute_instance_v2" "{{ tf_name }}" {
+  name            = "{{ instance.name }}"
+  image_name      = "{{ instance.image }}"
+  flavor_name     = "{{ instance.flavor }}"
+  key_pair        = "{{ instance.key_name }}"
+{%   if instance.security_groups | default(false) %}
+  security_groups = ["{{ instance.security_groups | join('", "') }}"]
+{%   endif %}
+
+  metadata = {
+{%   for k, v in (instance.meta | default({})).items() %}
+    {{ k }} = "{{ v }}",
+{%   endfor %}
+  }
+
+  network {
+    name = "{{ instance.network }}"
+  }
+}
+
+{%   if instance.floating_ip_network | default(false) %}
+resource "openstack_networking_floatingip_v2" "{{ tf_name }}" {
+  pool = "{{ instance.floating_ip_network }}"
+}
+
+resource "openstack_compute_floatingip_associate_v2" "{{ tf_name }}" {
+  floating_ip = openstack_networking_floatingip_v2.{{ tf_name }}.address
+  instance_id = openstack_compute_instance_v2.{{ tf_name }}.id
+}
+{%   endif %}
 {% endfor %}

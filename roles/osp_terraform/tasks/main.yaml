@@ -1,6 +1,6 @@
 ---
 - include_tasks: create-keypair.yaml
-  loop: "{{ osp_keypairs }}"
+  loop: "{{ osp_terraform.osp_keypairs | default([]) }}"
   loop_control:
     loop_var: osp_keypair
 

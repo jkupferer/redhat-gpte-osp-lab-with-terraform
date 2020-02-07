@@ -3,7 +3,7 @@
   hosts: localhost
   vars:
     osp_cloud: ospcloud
-    osp_component_name: infra
+    osp_component_name: three-tier-app
   tasks:
   - name: Load component configuration
     include_vars:
@@ -17,3 +17,14 @@
   - name: Run osp_terraform role
     include_role:
       name: osp_terraform
+
+  - name: Refresh Inventory
+    meta: refresh_inventory
+
+- name: Wait for hosts
+  hosts: apps:appdbs:frontends
+  gather_facts: false
+  tasks:
+  - name: Wait for connection
+    wait_for_connection:
+      timeout: 600

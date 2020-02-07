@@ -4,6 +4,7 @@ osp_flavors:
   ram: 2048
   vcpus: 1
   disk: 10
+  is_public: true
 
 osp_images:
 - name: rhel-guest-image-7.2-20151102.0.x86_64
@@ -19,6 +20,9 @@ osp_networks:
 - name: internal20
   subnet_name: internal20
   subnet_cidr: "20.20.20.0/24"
+  dns_nameservers:
+  - 8.8.8.8
+  - 8.8.4.4
   host_routes: []
 
 # Public Facing Network   
