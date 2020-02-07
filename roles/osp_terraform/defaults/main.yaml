@@ -1,0 +1,5 @@
+---
+osp_flavors: []
+osp_images: []
+osp_keypairs: []
+osp_terraform_dir: "{{ playbook_dir }}/terraform"

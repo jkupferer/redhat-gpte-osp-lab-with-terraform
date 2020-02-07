@@ -1,0 +1,6 @@
+---
+- include_tasks: define-security_group.yaml
+  loop: "{{ osp_security_groups }}"
+  loop_control:
+    loop_var: osp_security_group
+    label: "{{ osp_security_group.name }}"

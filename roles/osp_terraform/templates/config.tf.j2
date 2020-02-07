@@ -1,0 +1,28 @@
+provider "openstack" {
+  cloud = "{{ osp_cloud }}"
+}
+
+{% for flavor in osp_flavors %}
+resource "openstack_compute_flavor_v2" "{{ flavor.name | terraform_name_escape }}" {
+  name  = "{{ flavor.name }}"
+  ram   = "{{ flavor.ram }}"
+  vcpus = "{{ flavor.vcpus }}"
+  disk  = "{{ flavor.disk }}"
+}
+{% endfor %}
+
+{% for image in osp_images %}
+resource "openstack_images_image_v2" "{{ image.name | terraform_name_escape }}" {
+  name             = "{{ image.name }}"
+  image_source_url = "{{ image.url }}"
+  container_format = "bare"
+  disk_format      = "{{ image.disk_format }}"
+}
+{% endfor %}
+
+{% for keypair in osp_keypairs %}
+resource "openstack_compute_keypair_v2" "{{ keypair.name | terraform_name_escape }}" {
+  name       = "{{ keypair.name }}"
+  public_key = "{{ lookup('file', keypair.path ~ '.pub') }}"
+}
+{% endfor %}

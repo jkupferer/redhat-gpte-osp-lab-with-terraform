@@ -1,0 +1,39 @@
+---
+- name: Terraform Directory
+  file:
+    path: "{{ osp_terraform_dir }}"
+    state: directory
+    mode: u=rwx,go=
+
+- name: Write terraform config
+  template:
+    src: config.tf.j2
+    dest: "{{ osp_terraform_dir }}/config.tf"
+  check_mode: false # Run command in check mode
+
+- name: Terraform init
+  command: terraform init
+  args:
+    chdir: "{{ osp_terraform_dir }}"
+  check_mode: false # Run command in check mode
+  changed_when: false # Not actually a change to the env
+
+- name: Run terraform
+  command: >-
+    {%- if ansible_check_mode -%}
+    terraform plan
+    {%- else -%}
+    terraform apply -auto-approve
+    {%- endif -%}
+  args:
+    chdir: "{{ osp_terraform_dir }}"
+  check_mode: false # Run command in check mode
+  register: r_terraform_run
+  changed_when:
+  - '"Resources: 0 added, 0 changed, 0 destroyed." not in r_terraform_run.stdout'
+  - '"No changes. Infrastructure is up-to-date." not in r_terraform_run.stdout'
+
+- name: Show terraform plan
+  debug:
+    msg: "{{ r_terraform_run.stdout_lines }}"
+  when: ansible_check_mode

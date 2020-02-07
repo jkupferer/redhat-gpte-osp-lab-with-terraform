@@ -1,0 +1,17 @@
+---
+- name: OpenStack Lab Infrastructure Setup
+  hosts: localhost
+  vars:
+    osp_cloud: ospcloud
+    osp_component_name: infra
+  tasks:
+  - name: Load component configuration
+    include_vars: "{{ osp_cloud }}/{{ osp_component_name }}.yaml"
+
+  - name: Set fact for terraform directory
+    set_fact:
+      osp_terraform_dir: "{{ playbook_dir }}/terraform/{{ osp_cloud }}/{{ osp_component_name }}"
+
+  - name: Run osp_terraform role
+    include_role:
+      name: osp_terraform

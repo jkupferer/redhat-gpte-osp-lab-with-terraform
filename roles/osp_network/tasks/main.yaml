@@ -1,0 +1,6 @@
+---
+- include_tasks: define-network.yaml
+  loop: "{{ osp_networks }}"
+  loop_control:
+    loop_var: osp_network
+    label: "{{ osp_network.name }}"

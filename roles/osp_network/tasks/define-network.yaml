@@ -1,0 +1,23 @@
+---
+- name: Configure network {{ osp_network.name }}
+  os_network:
+    cloud: "{{ osp_cloud }}"
+    state: present
+    name: "{{ osp_network.name }}"
+    external: "{{ osp_network.external | default(false) }}"
+
+- name: Configuration subnets for {{ osp_network.name }}
+  os_subnet:
+    cloud: "{{ osp_cloud }}"
+    network_name: "{{ osp_network.name }}"
+    name: "{{ osp_network.name }}"
+    cidr: "{{ osp_network.subnet_cidr }}"
+    dns_nameservers: "{{ osp_network.dns_nameservers | default(osp_default_dns_nameservers) }}"
+    host_routes: "{{ osp_network.host_routes }}"
+
+- name: Define routers for {{ osp_network.name }}
+  include_tasks: define-network-router.yaml
+  loop: "{{ osp_network.routers | default([]) }}"
+  loop_control:
+    loop_var: osp_network_router
+    label: "{{ osp_network_router.name }}"

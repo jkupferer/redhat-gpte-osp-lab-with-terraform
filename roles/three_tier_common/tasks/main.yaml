@@ -1,0 +1,6 @@
+---
+- name: enable repos
+  copy:
+    src: "{{ three_tier_open_yum_repo_src }}"
+    dest: /etc/yum.repos.d/open_three-tier-app.repo
+    mode: u=rw,go=r

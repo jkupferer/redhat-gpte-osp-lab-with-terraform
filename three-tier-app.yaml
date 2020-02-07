@@ -1,0 +1,24 @@
+---
+- name: configuration
+  hosts: apps:appdbs:frontends
+  gather_facts: true
+  become: true
+  tasks:
+  - name: Configure Common
+    include_role:
+      name: three_tier_common
+
+  - name: Configure Frontends
+    include_role:
+      name: three_tier_frontend
+    when: "'frontends' in group_names"
+
+  - name: Configure App Servers
+    include_role:
+      name: three_tier_app
+    when: "'apps' in group_names"
+
+  - name: Configure AppDB Servers
+    include_role:
+      name: three_tier_appdb
+    when: "'appdbs' in group_names"

@@ -1,0 +1,11 @@
+---
+- name: Create keypair dir
+  file:
+    state: directory
+    mode: u=rwx,go=
+    path: "{{ osp_keypair.path | dirname }}"
+
+- name: Generate SSH Keypair
+  openssh_keypair:
+    path: "{{ osp_keypair.path }}"
+  register: r_openssh_keypair

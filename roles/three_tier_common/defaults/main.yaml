@@ -1,0 +1,7 @@
+---
+three_tier_open_yum_repo_src: >-
+  {{ lookup('first_found', [
+    'open_three-tier-app.repo',
+    '/etc/yum.repos.d/open_three-tier-app.repo',
+    '/etc/yum.repos.d/open.repo'
+  ]) }}

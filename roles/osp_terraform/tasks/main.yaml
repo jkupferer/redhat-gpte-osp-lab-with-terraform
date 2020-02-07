@@ -1,0 +1,7 @@
+---
+- include_tasks: create-keypair.yaml
+  loop: "{{ osp_keypairs }}"
+  loop_control:
+    loop_var: osp_keypair
+
+- include_tasks: run-terraform.yaml

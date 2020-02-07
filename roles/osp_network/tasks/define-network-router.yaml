@@ -1,0 +1,9 @@
+---
+- name: Create Router {{ osp_network_router.name }} for {{ osp_network.name }}
+  os_router:
+    cloud: "{{ osp_cloud }}"
+    name: "{{ osp_network_router.name }}"
+    network: "{{ osp_network.name }}"
+    external_fixed_ips:
+    - subnet: "{{ osp_network.name }}"
+    interfaces: "{{ osp_network_router.interfaces }}"

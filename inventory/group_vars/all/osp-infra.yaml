@@ -1,0 +1,87 @@
+---
+osp_flavors:
+- name: m2.small
+  ram: 2048
+  vcpus: 1
+  disk: 10
+
+osp_images:
+- name: rhel-guest-image-7.2-20151102.0.x86_64
+  disk_format: qcow2
+  url: http://www.opentlc.com/download/osp_advanced_networking/rhel-guest-image-7.2-20151102.0.x86_64.qcow2
+
+osp_keypairs:
+- name: lab
+  path: "{{ ansible_ssh_private_key_file }}"
+
+osp_networks:
+# Private Network   
+- name: internal20
+  subnet_name: internal20
+  subnet_cidr: "20.20.20.0/24"
+  host_routes: []
+
+# Public Facing Network   
+- name: public
+  subnet_name: public
+  subnet_cidr: "10.10.10.0/24"
+  external: true
+  host_routes: []
+  routers:
+  - name: router20
+    interfaces:
+    - internal20
+
+osp_security_groups:
+- name: apps
+  rules:
+  - port: 22
+  - port: 8080
+
+- name: appdbs
+  rules:
+  - port: 22
+  - port: 5432
+
+- name: frontends
+  rules:
+  - port: 22
+  - port: 80
+  - port: 443
+
+osp_instances:
+- name: app1
+  flavor: m2.small
+  image: rhel-guest-image-7.2-20151102.0.x86_64
+  meta: "group=apps,deployment_name=dev"
+  key_name: lab
+  network: internal20
+  floating_ip_network: public
+  security_groups: apps
+
+- name: app2
+  flavor: m2.small
+  image: rhel-guest-image-7.2-20151102.0.x86_64
+  meta: "group=apps,deployment_name=dev"
+  key_name: lab
+  network: internal20
+  floating_ip_network: public
+  security_groups: apps
+
+- name: db
+  flavor: m2.small
+  image: rhel-guest-image-7.2-20151102.0.x86_64
+  meta: "group=appdbs,deployment_name=dev"
+  key_name: lab
+  network: internal20
+  floating_ip_network: public
+  security_groups: appdbs
+
+- name: frontend
+  flavor: m2.small
+  image: rhel-guest-image-7.2-20151102.0.x86_64
+  meta: "group=frontends,deployment_name=dev"
+  key_name: lab
+  network: internal20
+  floating_ip_network: public
+  security_groups: frontends 
